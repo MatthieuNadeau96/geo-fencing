@@ -72,6 +72,8 @@ class HuntMainActivity : AppCompatActivity() {
         PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
     }
 
+    private val runningQorLater = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_hunt_main)
@@ -137,13 +139,12 @@ class HuntMainActivity : AppCompatActivity() {
                     grantResults[BACKGROUND_LOCATION_PERMISSION_INDEX] ==
                     PackageManager.PERMISSION_DENIED))
         {
-            // Permission denied.
             Snackbar.make(
                 binding.activityMapsMain,
-                R.string.permission_denied_explanation, Snackbar.LENGTH_INDEFINITE
+                R.string.permission_denied_explanation,
+                Snackbar.LENGTH_INDEFINITE
             )
                 .setAction(R.string.settings) {
-                    // Displays App settings screen.
                     startActivity(Intent().apply {
                         action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
                         data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
@@ -223,18 +224,19 @@ class HuntMainActivity : AppCompatActivity() {
      *  Determines whether the app has the appropriate permissions across Android 10+ and all other
      *  Android versions.
      */
+
     @TargetApi(29)
     private fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
         val foregroundLocationApproved = (
                 PackageManager.PERMISSION_GRANTED ==
-                ActivityCompat.checkSelfPermission(this,
-                    Manifest.permission.ACCESS_FINE_LOCATION))
+                        ActivityCompat.checkSelfPermission(this,
+                            Manifest.permission.ACCESS_FINE_LOCATION))
         val backgroundPermissionApproved =
             if (runningQOrLater) {
                 PackageManager.PERMISSION_GRANTED ==
-                ActivityCompat.checkSelfPermission(
-                    this, Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                )
+                        ActivityCompat.checkSelfPermission(
+                            this, Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                        )
             } else {
                 true
             }
@@ -248,20 +250,14 @@ class HuntMainActivity : AppCompatActivity() {
     private fun requestForegroundAndBackgroundLocationPermissions() {
         if (foregroundAndBackgroundLocationPermissionApproved())
             return
-
-        // Else request the permission
-        // this provides the result[LOCATION_PERMISSION_INDEX]
         var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
-
         val resultCode = when {
             runningQOrLater -> {
-                // this provides the result[BACKGROUND_LOCATION_PERMISSION_INDEX]
                 permissionsArray += Manifest.permission.ACCESS_BACKGROUND_LOCATION
                 REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE
             }
             else -> REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
         }
-
         Log.d(TAG, "Request foreground only location permission")
         ActivityCompat.requestPermissions(
             this@HuntMainActivity,
